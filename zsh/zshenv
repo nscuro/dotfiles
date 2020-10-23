@@ -1,0 +1,31 @@
+# Set vim as default editor
+export EDITOR=vim
+
+# Development
+export DEVELOPMENT_HOME="$HOME/development"
+
+# => Go
+export GOROOT="$HOME/.local/go"
+export GOPATH="$DEVELOPMENT_HOME/go"
+export GO111MODULE=auto
+
+# => Rust
+export CARGO_HOME="$HOME/.cargo"
+
+# Infosec
+export INFOSEC_HOME="$HOME/infosec"
+export BUGBOUNTY_HOME="$INFOSEC_HOME/bug-bounty"
+export WORDLISTS_HOME="$INFOSEC_HOME/wordlists"
+
+# PATH
+export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$CARGO_HOME/bin:$PATH"
+
+if [ -d "$HOME/.poetry" ]; then
+    export PATH="$HOME/.poetry/bin:$PATH"
+fi
+
+if [ -d "$HOME/.zshenv.d" ]; then
+    for file in $HOME/.zshenv.d/*.zsh; do
+        source "$file"
+    done
+fi

@@ -1,0 +1,7 @@
+[user]
+    name = nscuro
+    email = nscuro@protonmail.com
+    signingkey = 985ADB40F06304B3
+
+[commit]
+    gpgsign = true

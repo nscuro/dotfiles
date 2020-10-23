@@ -1,0 +1,25 @@
+source $HOME/.antigen/antigen.zsh
+
+antigen use oh-my-zsh
+
+antigen bundle cargo
+antigen bundle git
+antigen bundle golang
+antigen bundle pip
+antigen bundle command-not-found
+
+antigen bundle zsh-users/zsh-syntax-highlighting
+
+antigen theme win0err/aphrodite-terminal-theme 
+
+antigen apply
+
+if [ -d "$HOME/.zshrc.d" ]; then
+    for file in $HOME/.zshrc.d/*.zsh; do
+        source "$file"
+    done
+fi
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
