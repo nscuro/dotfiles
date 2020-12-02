@@ -22,7 +22,13 @@ if [ -d "$HOME/.zshrc.d" ]; then
 fi
 
 # Enable fzf if available
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if [ -f ~/.fzf.zsh ]; then
+    # Installed via install script
+    source ~/.fzf.zsh
+elif [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
+    # Installed via APT
+    source /usr/share/doc/fzf/examples/completion.zsh
+fi
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
