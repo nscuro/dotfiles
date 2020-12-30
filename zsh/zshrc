@@ -33,7 +33,6 @@ fi
 
 # Enable metasploit & msfvenom completions if available
 if [ -d "$INFOSEC_HOME/tools/metasploit-framework/external/zsh" ]; then
-    print "hello"
     fpath=("$INFOSEC_HOME/tools/metasploit-framework/external/zsh" $fpath)
 fi
 
