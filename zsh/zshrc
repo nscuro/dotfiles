@@ -8,6 +8,7 @@ antigen bundle golang
 antigen bundle pip
 antigen bundle command-not-found
 
+antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zsh-syntax-highlighting
 
 antigen theme win0err/aphrodite-terminal-theme 
@@ -28,6 +29,12 @@ if [ -f ~/.fzf.zsh ]; then
 elif [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
     # Installed via APT
     source /usr/share/doc/fzf/examples/completion.zsh
+fi
+
+# Enable metasploit & msfvenom completions if available
+if [ -d "$INFOSEC_HOME/tools/metasploit-framework/external/zsh" ]; then
+    print "hello"
+    fpath=("$INFOSEC_HOME/tools/metasploit-framework/external/zsh" $fpath)
 fi
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
