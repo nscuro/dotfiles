@@ -12,6 +12,10 @@ export GO111MODULE=auto
 # => Rust
 export CARGO_HOME="$HOME/.cargo"
 
+# => .NET (Core)
+export DOTNET_USE_POLLING_FILE_WATCHER=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # Infosec
 export INFOSEC_HOME="$HOME/infosec"
 export BUGBOUNTY_HOME="$INFOSEC_HOME/bug-bounty"
