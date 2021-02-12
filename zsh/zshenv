@@ -24,6 +24,10 @@ export WORDLISTS_HOME="$INFOSEC_HOME/wordlists"
 # PATH
 export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$CARGO_HOME/bin:$PATH"
 
+if [ -d "$HOME/.dotnet/tools" ]; then
+    export PATH="$HOME/.dotnet/tools:$PATH"
+fi
+
 if [ -d "$HOME/.poetry" ]; then
     export PATH="$HOME/.poetry/bin:$PATH"
 fi
