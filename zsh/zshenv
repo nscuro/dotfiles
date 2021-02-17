@@ -7,7 +7,7 @@ export DEVELOPMENT_HOME="$HOME/development"
 # => Go
 export GOROOT="$HOME/.local/go"
 export GOPATH="$DEVELOPMENT_HOME/go"
-export GO111MODULE=auto
+export GO111MODULE=on
 
 # => Rust
 export CARGO_HOME="$HOME/.cargo"
