@@ -2,11 +2,9 @@ source $HOME/.antigen/antigen.zsh
 
 antigen use oh-my-zsh
 
-antigen bundle cargo
-antigen bundle git
-antigen bundle golang
-antigen bundle pip
 antigen bundle command-not-found
+antigen bundle git
+antigen bundle ssh-agent
 
 antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zsh-syntax-highlighting
