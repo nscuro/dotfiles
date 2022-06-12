@@ -21,6 +21,11 @@ export INFOSEC_HOME="$HOME/infosec"
 export BUGBOUNTY_HOME="$INFOSEC_HOME/bug-bounty"
 export WORDLISTS_HOME="$INFOSEC_HOME/wordlists"
 
+# Homebrew
+if [ -f "/opt/homebrew/bin/brew" ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 # PATH
 export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$CARGO_HOME/bin:$PATH"
 
