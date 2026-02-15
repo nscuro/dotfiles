@@ -3,7 +3,6 @@ source $HOME/.antigen/antigen.zsh
 antigen use oh-my-zsh
 antigen bundle command-not-found
 antigen bundle git
-#antigen bundle ssh-agent
 antigen bundle zsh-users/zsh-completions
 antigen bundle zsh-users/zsh-syntax-highlighting
 antigen theme win0err/aphrodite-terminal-theme 
@@ -46,3 +45,10 @@ fi
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+#
+# Aliases
+#
+alias dc="docker compose"
+alias dcu="docker compose up -d"
+alias dcd="docker compose down --volumes"
