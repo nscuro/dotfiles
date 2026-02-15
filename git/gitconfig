@@ -1,10 +1,16 @@
 [user]
     name = nscuro
     email = nscuro@protonmail.com
-    signingkey = 985ADB40F06304B3
+    signingkey = ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJeOVuarhkbFshcLrawYxgFa76y0P67Nji9BxttZ6Ne1
 
 [commit]
     gpgsign = true
+
+[gpg]
+	format = ssh
+
+[include]
+    path = ~/.gitconfig.os
 
 [filter "lfs"]
 	clean = git-lfs clean -- %f
