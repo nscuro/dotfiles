@@ -1,4 +1,4 @@
-ifeq ($(shell uname -a),Darwin)
+ifeq ($(shell uname -s),Darwin)
     OS_CONFIG := gitconfig.macos
 else
     OS_CONFIG := gitconfig.linux
