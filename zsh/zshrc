@@ -12,10 +12,6 @@ export EDITOR=vim
 
 export DEVELOPMENT_HOME="$HOME/development"
 
-export GOROOT="$HOME/.local/go"
-export GOPATH="$DEVELOPMENT_HOME/go"
-export GO111MODULE=on
-
 export CARGO_HOME="$HOME/.cargo"
 
 export BUILDAH_FORMAT='docker'
@@ -23,7 +19,7 @@ export BUILDAH_FORMAT='docker'
 export DOTNET_USE_POLLING_FILE_WATCHER=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$CARGO_HOME/bin:$PATH"
+export PATH="$HOME/.local/bin:$CARGO_HOME/bin:$PATH"
 
 if [ -d "$HOME/.dotnet/tools" ]; then
     export PATH="$HOME/.dotnet/tools:$PATH"
@@ -45,6 +41,18 @@ fi
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+#
+# Go
+#
+if [[ "$(uname)" == 'Darwin' ]]; then
+    export GOROOT="$(brew --prefix golang)/libexec"
+else
+    export GOROOT="$HOME/.local/go"
+fi
+export GOPATH="$DEVELOPMENT_HOME/go"
+export GO111MODULE=on
+export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$PATH"
 
 #
 # Aliases
