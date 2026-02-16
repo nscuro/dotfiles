@@ -43,6 +43,13 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 #
+# fzf
+#
+if command -v fzf &>/dev/null; then
+    source <(fzf --zsh)
+fi
+
+#
 # Go
 #
 if [[ "$(uname)" == 'Darwin' ]]; then
