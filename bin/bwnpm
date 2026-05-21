@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$PWD" == "$HOME" ]]; then
+  echo "bwnpm: refusing to run in \$HOME" >&2
+  exit 1
+fi
+if [[ ! -f package.json ]]; then
+  echo "bwnpm: no package.json in $PWD" >&2
+  exit 1
+fi
+
+NPM_CACHE="${npm_config_cache:-$HOME/.npm}"
+mkdir -p "$NPM_CACHE"
+
+NPM_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v node)")")")"
+SANDBOX_HOME=/tmp/npm-sandbox-home
+
+SECCOMP_BPF="$(mktemp)"
+trap 'rm -f "$SECCOMP_BPF"' EXIT
+python3 - "$SECCOMP_BPF" <<'PY'
+import sys
+try:
+    import seccomp
+except ImportError:
+    try:
+        import pyseccomp as seccomp
+    except ImportError:
+        sys.stderr.write(
+            "bwnpm: libseccomp python binding not found "
+            "(install python3-seccomp)\n"
+        )
+        sys.exit(1)
+
+f = seccomp.SyscallFilter(defaction=seccomp.ALLOW)
+deny = [
+    "ptrace", "process_vm_readv", "process_vm_writev",
+    "keyctl", "add_key", "request_key",
+    "mount", "umount", "umount2", "pivot_root", "chroot", "move_mount",
+    "open_tree", "fsopen", "fsconfig", "fsmount", "fspick",
+    "swapon", "swapoff", "reboot",
+    "kexec_load", "kexec_file_load",
+    "init_module", "finit_module", "delete_module",
+    "bpf", "perf_event_open",
+    "userfaultfd", "setns", "unshare",
+    "open_by_handle_at", "name_to_handle_at",
+    "io_uring_setup", "io_uring_enter", "io_uring_register",
+    "uselib", "acct", "quotactl", "nfsservctl",
+    "iopl", "ioperm",
+]
+for name in deny:
+    try:
+        f.add_rule(seccomp.ERRNO(1), name)
+    except (RuntimeError, ValueError):
+        pass
+
+with open(sys.argv[1], "wb") as fp:
+    f.export_bpf(fp)
+PY
+
+exec {SECCOMP_FD}< "$SECCOMP_BPF"
+rm -f "$SECCOMP_BPF"
+trap - EXIT
+
+ARGS=(
+  --unshare-all
+  --share-net
+  --die-with-parent
+  --new-session
+  --clearenv
+  --proc /proc
+  --dev /dev
+  --tmpfs /tmp
+  --dir "$SANDBOX_HOME"
+  --ro-bind /usr /usr
+  --symlink usr/lib /lib
+  --symlink usr/lib64 /lib64
+  --ro-bind "$NPM_HOME" "$NPM_HOME"
+  --ro-bind /etc/resolv.conf /etc/resolv.conf
+  --ro-bind /etc/ssl /etc/ssl
+  --ro-bind /etc/nsswitch.conf /etc/nsswitch.conf
+  --ro-bind /etc/hosts /etc/hosts
+  --bind "$PWD" "$PWD"
+)
+
+if [[ -e "$PWD/.git" ]]; then
+  ARGS+=(--tmpfs "$PWD/.git")
+fi
+
+ARGS+=(
+  --bind "$NPM_CACHE" "$NPM_CACHE"
+  --chdir "$PWD"
+  --setenv HOME "$SANDBOX_HOME"
+  --setenv PATH "$NPM_HOME/bin:/usr/bin:/bin"
+  --setenv npm_config_cache "$NPM_CACHE"
+  --setenv TERM "${TERM:-xterm}"
+  --seccomp "$SECCOMP_FD"
+)
+
+exec bwrap "${ARGS[@]}" npm "$@"
