@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+if [[ "$PWD" == "$HOME" ]]; then
+  echo "bwnpm: refusing to run in \$HOME" >&2
+  exit 1
+fi
+if [[ ! -f package.json ]]; then
+  echo "bwnpm: no package.json in $PWD" >&2
+  exit 1
+fi
+
+NPM_CACHE="${npm_config_cache:-$HOME/.npm}"
+mkdir -p "$NPM_CACHE"
+
+SANDBOX_HOME="$(mktemp -d /tmp/npm-sandbox-home.XXXXXX)"
+
+NPM_BIN="$(command -v npm)"
+NPM_BIN_DIR="$(dirname "$NPM_BIN")"
+REAL_HOME="$HOME"
+
+read -r -d '' PROFILE <<'SBPL' || true
+(version 1)
+(deny default)
+(allow process-fork)
+(allow process-exec)
+(allow signal (target same-sandbox))
+(allow sysctl-read)
+(allow mach-lookup)
+(allow ipc-posix-shm)
+(allow iokit-open)
+(allow system-socket)
+(allow network*)
+(allow file-read*)
+
+(allow file-write*
+  (subpath "/private/tmp")
+  (subpath "/private/var/tmp")
+  (subpath "/private/var/folders")
+  (subpath (param "PWD"))
+  (subpath (param "CACHE"))
+  (subpath (param "SBHOME")))
+
+(deny file-write*
+  (subpath (string-append (param "PWD") "/.git")))
+
+(deny file-read* file-write*
+  (subpath (string-append (param "REAL_HOME") "/.ssh"))
+  (subpath (string-append (param "REAL_HOME") "/.aws"))
+  (subpath (string-append (param "REAL_HOME") "/.gnupg"))
+  (subpath (string-append (param "REAL_HOME") "/.config/gh"))
+  (subpath (string-append (param "REAL_HOME") "/Library/Keychains")))
+SBPL
+
+exec env -i \
+  HOME="$SANDBOX_HOME" \
+  PATH="$NPM_BIN_DIR:/usr/bin:/bin:/usr/sbin:/sbin" \
+  npm_config_cache="$NPM_CACHE" \
+  TERM="${TERM:-xterm}" \
+  sandbox-exec \
+    -D "PWD=$PWD" \
+    -D "CACHE=$NPM_CACHE" \
+    -D "SBHOME=$SANDBOX_HOME" \
+    -D "REAL_HOME=$REAL_HOME" \
+    -p "$PROFILE" \
+    "$NPM_BIN" "$@"
