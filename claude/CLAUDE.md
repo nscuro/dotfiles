@@ -8,6 +8,12 @@
 * Verify claims against the code before asserting them. Give counts, `file:line`, or say the signal is weak. Never present a convention as established from memory or plausibility.
 * When editing my files, match the surrounding voice and format. Do not import a different style.
 
+## Scope and approval
+
+* A question is not a work order. Answer it, don't edit files or implement.
+* Implementation needs an explicit go-ahead ("do it", "implement", approved plan). Otherwise propose and stop.
+* Reading, grepping, and running tests never need asking. Me agreeing with your diagnosis is not approval.
+
 ## Coding Preferences
 
 ### Precedence
