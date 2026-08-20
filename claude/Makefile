@@ -1,6 +1,5 @@
 install:
 	mkdir -p "$${HOME}/.claude/skills"
-	ln -f -s "$(shell pwd)/CLAUDE.md" "$${HOME}/.claude/CLAUDE.md"
-	ln -f -s "$(shell pwd)/skills/java-style" "$${HOME}/.claude/skills/java-style"
-	ln -f -s "$(shell pwd)/skills/sql-style" "$${HOME}/.claude/skills/sql-style"
+	ln -f -s -n "$(shell pwd)/CLAUDE.md" "$${HOME}/.claude/CLAUDE.md"
+	for skill in skills/*/; do ln -f -s -n "$(shell pwd)/$${skill%/}" "$${HOME}/.claude/skills/$$(basename "$${skill}")"; done
 .PHONY: install
