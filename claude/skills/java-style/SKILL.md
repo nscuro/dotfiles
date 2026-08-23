@@ -106,6 +106,16 @@ Use JUnit 5 (Jupiter) or later for new tests. Do not migrate existing tests usin
 Test method names should follow the `<subject>Should<behavior>` format, where `subject` is the method being tested, e.g. `sayHelloShouldPrintHello`.
 `<subject>` may be omitted when it's obvious, e.g. when the tested class only has one public method, or the test method is in a `@Nested` class that already states the subject.
 
+### Helpers and Fixtures
+
+A test must read top to bottom without jumping to another method. Duplication between tests is fine, indirection is not.
+
+* Inline anything that varies per test. `@BeforeEach` is for setup identical across the class.
+* Never hide an assertion behind a method that reads like an accessor.
+* Set up only what the test depends on.
+
+A helper earns its place by removing real work, not by renaming a few lines.
+
 ### Assertions
 
 Use AssertJ for fluent assertions with `assertThat`. Never use JUnit's `assertEquals` etc.
