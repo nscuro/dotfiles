@@ -39,7 +39,7 @@ Red-green-refactor, one behavior per cycle: write the failing test, run it, conf
 
 * When the JetBrains MCP server is available, prefer it over shell equivalents: `search_symbol` / `get_symbol_info` for navigation, `rename_refactoring` for renames, `get_file_problems` before calling a change done. Fall back to `grep` / `sed` when it is not.
 * In Java projects, use the `javadocs` MCP server to inspect third-party APIs (javadoc, sources, available versions). Never extract or read JARs from the local Maven repository (`~/.m2`), and never recall an API signature from memory when the server can answer.
-* Always invoke `bwnpm` instead of `npm`. `bwnpm` is a sandboxed wrapper. Bare `npm` is blocked.
+* Always invoke `snpm` instead of `npm`. `snpm` runs `npm` in a sandbox. Bare `npm` is blocked.
 
 ## Feedback
 

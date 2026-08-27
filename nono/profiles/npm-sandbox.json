@@ -1,0 +1,9 @@
+{
+  "meta": { "name": "npm-sandbox" },
+  "extends": "node-dev",
+  "commands": { "allow": ["npm"] },
+  "filesystem": {
+    "allow": ["$HOME/.npm"],
+    "deny": ["$WORKDIR/.git"]
+  }
+}

@@ -31,6 +31,16 @@ if [ -d "$HOME/.poetry" ]; then
     export PATH="$HOME/.poetry/bin:$PATH"
 fi
 
+#
+# nvm
+#
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+#
+# sdkman
+#
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
@@ -40,9 +50,10 @@ elif [ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+#
+# Claude Code
+#
+export CLAUDE_CODE_DISABLE_AUTO_MEMORY=1
 
 #
 # fzf
@@ -69,3 +80,4 @@ export PATH="$HOME/.local/bin:$GOROOT/bin:$GOPATH/bin:$PATH"
 alias dc="docker compose"
 alias dcu="docker compose up -d"
 alias dcd="docker compose down --volumes"
+alias snpm="nono run -p npm-sandbox --allow-cwd -s npm"
