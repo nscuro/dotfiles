@@ -3,7 +3,7 @@ name: java-profile
 description: >-
   Find out *where* a Java workload spends CPU or allocates memory, using async-profiler.
   Use when asked to profile Java code, find a hot method, find what allocates, explain why a
-  test/benchmark/app is slow, or produce a flame graph. Not for "did my change make it faster".
+  test/benchmark/app is slow. Not for "did my change make it faster".
 ---
 
 Answers "where does it go", never "how fast is it".
@@ -47,11 +47,10 @@ unusual, ask them for the path to `libasyncProfiler.so` and use that.
 | Lock contention | `event=lock,lock=1ms` |
 | Native/off-heap allocation | `event=nativemem,nativemem=1m`, for JNI and direct buffers |
 
-`event=cpu` uses `perf_events`. When the kernel blocks it, via `perf_event_paranoid` or container
-seccomp, async-profiler falls back to `ctimer` by itself, so there is nothing to do, but you lose
-kernel stacks. `cpu` also opens a file descriptor per thread, which can exhaust the limit on
-thread-heavy apps, and it truncates stacks deeper than `kernel.perf_event_max_stack`, 127 by
-default. That truncation is silent.
+`event=cpu` uses `perf_events`. When the kernel blocks it, async-profiler falls back to `ctimer`
+on its own, so there is nothing to do, but you lose kernel stacks. It also opens one file
+descriptor per thread, which exhausts the limit on thread-heavy apps, and it silently truncates
+stacks deeper than `kernel.perf_event_max_stack`, 127 by default.
 
 Canonical option string, with event-specific bits from the table appended:
 
@@ -67,10 +66,16 @@ start,collapsed,dot,norm,loglevel=none,file=/tmp/prof-%p.txt,<event opts>
 | `loglevel=none` | required under surefire, the startup banner corrupts the fork channel |
 | `%p` | forked JVMs would otherwise clobber each other |
 
-The file is written on JVM exit, once per fork, so a reused surefire fork yields one file.
+async-profiler writes the file on JVM exit, once per fork, so a reused surefire fork yields
+one file.
 
 **Both events in one run.** Swap `collapsed` for `jfr`, list both events, split afterwards. Worth
-it whenever the workload is slow to set up.
+it whenever the workload is slow to set up, but **the CPU half is then wrong**. The allocation
+sampler runs on the sampled thread, so its own work is charged to the CPU profile. It surfaces as
+a native leaf, `thread_self_trap` on macOS, whose `HOT_DEPTH=2` caller is
+`ObjectSampler::recordAllocation`. The share grows with allocation rate and reaches tens of
+percent of a busy thread. The alloc half is unaffected. Use the combined run to find what
+allocates, then re-run CPU-only before quoting a CPU number.
 
 ```
 start,jfr,event=itimer,interval=1ms,alloc=64k,cstack=dwarf,loglevel=none,file=/tmp/prof-%p.jfr
@@ -85,13 +90,45 @@ jfrconv --alloc --dot --norm --total -o collapsed /tmp/prof-1234.jfr alloc.txt
 
 ## 2. Run the workload
 
+**Isolate the behavior in its own driver first.** Profile something that runs only the code in
+question, in a loop, with setup hoisted out of the loop. Point the profiler at the nearest
+existing test instead and its fixtures, its assertions and the framework land in the profile too,
+where they usually outweigh what you came for.
+
+A single-file source program is the cheapest driver, and on **Java 25 there is no `javac` step**,
+`java ProfDriver.java` compiles and runs it in one command. Give it a `main` that loads the input
+once, then loops the call under test. `com.sun.tools.javac.launcher.SourceLauncher` frames in the
+result confirm you profiled the driver and not something else.
+
+**Size the loop for ~2000 samples on the method under test**, not on its thread and not on the
+JVM. Attribute with `tree.sh` before reading anything else, and raise the iteration count when
+the method's own count falls short.
+
+When the code needs the application's wiring, write a test that exercises that one path and
+nothing else. **Set its configuration defaults to the production ones.** Test wiring commonly
+leaves pooling, caching and batching off, and each one turns work the production path amortises
+into per-call setup that outranks the code under test. Read the defaults, do not assume them.
+
 **Add `-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints` alongside the agent**, in the same
 `JAVA_TOOL_OPTIONS` string. Without them the JVM only records safepoint-accurate locations, so
 samples land on the wrong line and inlined frames go missing. Costs nothing, and the profile is
 wrong in ways you cannot detect without it.
 
 **Maven.** Inject through `JAVA_TOOL_OPTIONS`, not `-DargLine`. It leaves the pom's own argLine
-intact, so there is nothing to copy across.
+intact, so there is nothing to copy across. It also carries `-D` system properties into the fork,
+so a driver's iteration count is a flag rather than an edit.
+
+**`MAVEN_ARGS` carries Maven's own flags**, so a wrapper that hardcodes its goals still takes
+`-Djacoco.skip=true` and `-pl`. Use it instead of abandoning the project's build script.
+
+```sh
+MAVEN_ARGS="-Djacoco.skip=true" JAVA_TOOL_OPTIONS="-agentpath:..." make test-single TEST=FooTest
+```
+
+**`JAVA_TOOL_OPTIONS` does not reach `mvnd`.** The daemon JVM is already running and the surefire
+fork inherits the daemon's environment, not your shell's. The build goes green and writes no
+profile file, the same symptom as the argLine trap below. Run plain `mvn`, and override the
+wrapper when one picks the daemon for you, `make test-single MVND=mvn`.
 
 ```sh
 JAVA_TOOL_OPTIONS="-agentpath:$ASPROF_LIB=start,event=alloc,alloc=64k,total,collapsed,dot,norm,loglevel=none,file=/tmp/prof-%p.txt" \
@@ -114,14 +151,8 @@ file by content, not by size.
 grep -lF 'YourTestClass' /tmp/prof-*.txt
 ```
 
-**In `jfr` mode that grep finds nothing**, the recording is binary. Convert first, then grep.
-
-```sh
-for f in /tmp/prof-*.jfr; do
-  jfrconv --cpu -o collapsed "$f" "$f.txt" 2>/dev/null
-  grep -qF 'YourTestClass' "$f.txt" && echo "fork: $f"
-done
-```
+**In `jfr` mode that grep finds nothing**, the recording is binary. Convert each candidate with
+`jfrconv --cpu -o collapsed`, then grep the output.
 
 **Gradle.** No CLI flag for test JVM args, so inject an init script instead of editing the build.
 
@@ -135,7 +166,8 @@ EOF
 ./gradlew test --tests 'FooTest' -I /tmp/prof.init.gradle
 ```
 
-**Plain JVM.** `java -agentpath:$ASPROF_LIB=start,... -cp ... Main`
+**Plain JVM.** `java -agentpath:$ASPROF_LIB=start,... -cp ... Main`, and the same flag works
+ahead of a `.java` file: `java -agentpath:... -cp app.jar ProfDriver.java`.
 
 **Already-running JVM.** No restart, profile the real symptom while it happens.
 
@@ -146,21 +178,31 @@ asprof -e alloc --alloc 64k --total -o collapsed -d 20 -f /tmp/prof.txt $(jcmd -
 ## 3. Read it
 
 ```sh
-./hot.sh  /tmp/prof.txt 25             # top 25 self frames, what is hot
-./tree.sh /tmp/prof.txt 25             # top 25 by inclusive total, who owns it
-./tree.sh /tmp/prof.txt processBom     # where processBom's total went, by direct child
-HOT_DEPTH=2 ./hot.sh /tmp/alloc.txt    # aggregate by caller, not leaf
-./hot.sh before.txt after.txt          # what changed, biggest delta first
-grep -c . /tmp/prof.txt                # distinct stacks
+./hot.sh /tmp/prof.txt 25                 # top 25 self frames, what is hot
+TREE_PKG=org.foo ./tree.sh /tmp/prof.txt  # who owns the cost, your code only
+./tree.sh /tmp/prof.txt processBom        # where processBom's total went, by direct child
+HOT_DEPTH=2 ./hot.sh /tmp/alloc.txt       # aggregate by caller, not leaf
+./hot.sh before.txt after.txt             # what changed, by share of each total
+grep -c . /tmp/prof.txt                   # distinct stacks
 ```
 
-`hot.sh` answers which frame burns the samples. That is rarely the question. **Which part of your
-code owns the cost is `tree.sh`.** Start at the entry point and walk down child by child until the
+`hot.sh` answers which frame burns the samples. That is rarely the question. **`tree.sh` answers
+which part of your code owns the cost.** Start at the entry point and walk down child by child until the
 number stops moving. Two or three steps usually land on the answer.
 
 Inclusive mode ranks framework and wrapper frames at the top by construction, since every `main`,
-`Thread.run` and reflection hop encloses everything. Grep it for your own package, or skip it and
-walk down from an entry point with the child view.
+`Thread.run` and reflection hop encloses everything. **Always pass `TREE_PKG`.** It keeps only
+frames containing that string and leaves the percentages relative to the whole profile. Bare
+`tree.sh FILE N` is for when you do not yet know which packages are in play.
+
+`tree.sh FILE FRAME` matches a whole frame or its trailing `.method`, so `processBom` will not
+answer with `processBomAsync`'s children. When nothing matches that way it falls back to a
+substring match and says so on stderr, your cue that the number is about something else.
+
+One method can occupy several consecutive frames in a stack, `Foo.bar_[i]` sitting above
+`Foo.bar_[j]`, when the JIT inlined it into itself. Both views collapse those, so a hot method
+never reports itself as its own child or splits across two rows by annotation. The row keeps the
+first annotation it was seen with, which is enough for the `_[0]` warmup check in caveat 2.
 
 To restrict any view to one subtree, filter first. Both scripts read `/dev/stdin`.
 
@@ -175,11 +217,13 @@ threads than in the workload, and a JVM total blends them silently.
 jfrconv --cpu --dot --norm --total -t -o collapsed /tmp/prof-1234.jfr cpu-t.txt
 ./threads.sh cpu-t.txt                   # per-thread totals, biggest first
 ./threads.sh cpu-t.txt main > main.txt   # that thread's stacks, prefix stripped
+./threads.sh cpu-t.txt '[main]'          # the label the totals view prints also works
 ```
 
-Match the thread by name. The tid changes every run. `main.txt` is an ordinary `collapsed` file.
-If the compiler threads are the ones burning CPU, `-F comptask` names the method each one is
-compiling.
+Totals roll up by name, so a nine-thread GC pool is one row instead of nine that each look
+negligible, and the filter matches by name too. The tid changes every run. `main.txt` is an
+ordinary `collapsed` file. If the compiler threads are the ones burning CPU, `-F comptask` names
+the method each one is compiling.
 
 **In an `alloc` profile the leaf frame is the allocated type**, `byte[]` or `java.lang.String`, not
 the allocation site. The default view tells you what is allocated, `HOT_DEPTH=2` tells you who
@@ -195,14 +239,12 @@ For **who calls the hot frame**, grep the raw file. Callers are the frames to it
 grep 'HashMap.resize' /tmp/prof.txt | sort -t' ' -k2 -rn | head
 ```
 
-For a picture, re-run with `flamegraph` instead of `collapsed` and `file=...html`.
-
 ## 4. Before believing the profile
 
 1. **Under ~2000 samples is noise.** Count them on the thread you care about, not the JVM total.
    Lower the interval, or loop the workload.
-2. **A 200ms unit test profiles class loading, not your code.** Loop the workload inside one JVM
-   first. To confirm warmup, add `ann`. Many `_[0]` frames means interpreted, so you profiled the
+2. **A 200ms unit test profiles class loading, not your code.** To confirm the JVM warmed up,
+   add `ann`. Many `_[0]` frames means interpreted, so you profiled the
    wrong thing. With persistent state (a database, a cache, a filesystem) a naive loop profiles a
    *different* code path, since iteration 2 updates what iteration 1 inserted. Give each iteration
    fresh state, expect drift as the datastore grows, and report steady-state iterations only.
@@ -215,12 +257,11 @@ For a picture, re-run with `flamegraph` instead of `collapsed` and `file=...html
    costlier and can be fragile on deeply mixed stacks, so fall back only if it misbehaves. `wall`
    is not a substitute, it adds idle GC and reference-handler threads. If `[no_Java_frame]` still
    dominates, use `alloc`, accurate everywhere, or re-run on Linux with `event=cpu`.
-6. **Profiling a test profiles the test harness too.** Fixture setup and the assertions after the
-   code under test share the profile with it, and routinely outweigh it. Attribute against the
-   method under test with `tree.sh`, never against the JVM total, and say which share was harness
-   when reporting.
+6. **When you do profile a test, the harness is in there with it.** Attribute against the method
+   under test with `tree.sh`, never against the JVM total, and say which share was harness when
+   reporting.
 7. **A `wall` profile distorts what it measures and never sizes a fix.** Sampling every thread at
-   5ms slows the workload measurably, so its absolute numbers do not compare to an unprofiled run.
+   5ms slows the workload, so its absolute numbers do not compare to an unprofiled run.
    An inclusive wall percentage is not a saving either. "56% of wall" does not mean removing it
    returns 56%. Use `wall` to find where it blocks, a socket, a lock, a disk, then size the fix by
    counting operations.
