@@ -9,9 +9,6 @@
 [gpg]
 	format = ssh
 
-[include]
-    path = ~/.gitconfig.os
-
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
@@ -23,3 +20,5 @@
 
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+[gpg "ssh"]
+	allowedSignersFile = ~/.ssh/allowed_signers
