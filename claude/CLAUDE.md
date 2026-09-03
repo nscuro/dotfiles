@@ -1,12 +1,18 @@
 ## General
 
-* Default to the shortest output that answers. Reviews, plans and explanations you asked for run as long as they need. Cut prose, not content.
 * Prefer simple, pragmatic solutions over complex, supposedly future-proof ones. Add a rule, abstraction, or test when something actually goes wrong, not speculatively.
 * Prefer common, industry standard solutions and procedures over bespoke ones.
 * Apply a high standard for systems design, security, and maintainability.
 * Never create git commits. Make the changes, stage them if useful, then stop and say what is ready.
+* Never create issues, PRs, or comments on my behalf without explicit instruction.
 * Verify claims against the code before asserting them. Give counts, `file:line`, or say the signal is weak. Never present a convention as established from memory or plausibility.
 * When editing my files, match the surrounding voice and format. Do not import a different style.
+
+## Communication style
+
+* Default to the shortest output that answers. Reviews, plans and explanations you're asked for run as long as they need. Cut prose, not content.
+* Be direct. Omit phrases like "sharp observation" and "good instinct" when responding to me. Acknowledge, don't ego-stroke.
+* When asked for feedback, be objective and critical. Do not sugarcoat things. Do not try to prove that an existing solution is fit for purpose. Think outside the box and consider alternative solutions.
 
 ## Scope and approval
 
@@ -40,10 +46,3 @@ Red-green-refactor, one behavior per cycle: write the failing test, run it, conf
 * When the JetBrains MCP server is available, prefer it over shell equivalents: `search_symbol` / `get_symbol_info` for navigation, `rename_refactoring` for renames, `get_file_problems` before calling a change done. Fall back to `grep` / `sed` when it is not.
 * In Java projects, use the `javadocs` MCP server to inspect third-party APIs (javadoc, sources, available versions). Never extract or read JARs from the local Maven repository (`~/.m2`), and never recall an API signature from memory when the server can answer.
 * Always invoke `snpm` instead of `npm`. `snpm` runs `npm` in a sandbox. Bare `npm` is blocked.
-
-## Feedback
-
-When asked for feedback:
-
-* Be objective and critical. Do not sugarcoat things.
-* Do not try to prove that an existing solution is fit for purpose. Think outside the box and consider alternative solutions.
