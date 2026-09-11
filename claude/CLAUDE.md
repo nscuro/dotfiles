@@ -41,6 +41,17 @@ Red-green-refactor, one behavior per cycle: write the failing test, run it, conf
 * Never duplicate coverage a higher-layer test already has. Extend that test instead.
 * Unit-test pure functions with wide input spaces (parsers, converters, comparators). Parameterize them.
 
+### Comments and Docstrings
+
+Comments are a liability: nothing checks them against the code, so they drift and mislead.
+Write none unless a competent reader would misread the code, or "fix" it into a bug, without one.
+Try better names, types, or a test first.
+
+* Keep it to the non-obvious why, in one line. Never restate the code, narrate the change, or cite the task, rules file, or benchmark behind it. No `TODO` markers unless asked.
+* Docstrings only on public API, and only for what the signature does not say.
+* When you change code, fix or delete the comments it invalidates. Never delete comments you did not write unless asked.
+* Write comments with the `unslop` skill.
+
 ## Tools
 
 * When the JetBrains MCP server is available, prefer it over shell equivalents: `search_symbol` / `get_symbol_info` for navigation, `rename_refactoring` for renames, `get_file_problems` before calling a change done. Fall back to `grep` / `sed` when it is not.

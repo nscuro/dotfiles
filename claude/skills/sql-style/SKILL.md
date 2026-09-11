@@ -3,7 +3,8 @@ name: sql-style
 description: >-
   My default SQL coding conventions. Use when writing, reviewing, or refactoring SQL.
   This includes migrations, DAO queries, and query strings embedded in code.
-  Use unless the repo you're working on defines its own style.
+  Where the repo's formatter or documented conventions conflict with a rule here, the repo wins.
+  All other rules still apply.
 ---
 
 ## Formatting
@@ -55,4 +56,4 @@ having count(distinct rf.vulnerability_id) >= :min_vulnerability_count
 * `returning` instead of a follow-up select.
 * Prefer one statement over several round trips. CTEs can return several results in one query.
 * `where true` followed by `and ...` when predicates are composed conditionally.
-* Comment WHY a query is shaped as it is: locking, index choice, deferred constraints. Never restate the SQL.
+* Query shape driven by locking, index choice, or deferred constraints warrants a comment.

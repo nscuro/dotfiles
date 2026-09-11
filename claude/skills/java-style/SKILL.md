@@ -1,8 +1,9 @@
 ---
 name: java-style
 description: >-
-  My default Java coding conventions. Use when writing, reviewing, or refactoring Java code,
-  unless the repo you're working on defines its own style.
+  My default Java coding conventions. Use when writing, reviewing, or refactoring Java code.
+  Where the repo's formatter or documented conventions conflict with a rule here, the repo wins.
+  All other rules still apply.
 ---
 
 ## Imports
@@ -70,14 +71,7 @@ Use `"...".formatted(args)` over String concatenation and `String.format`.
 
 String concatenation is only acceptable when the added value appears at the very beginning or very end, e.g. `"Hello, " + name` / `name + " says hello"`.
 
-## Comments
-
-Omit trivial comments that explain WHAT something does.
-Use comments to explain WHY something is done.
-
 ## Javadoc
-
-Only add Javadoc for public classes and methods, never private or package-private.
 
 When the project uses Java 25 or newer, use the Markdown notation.
 
