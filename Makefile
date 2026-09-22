@@ -5,6 +5,10 @@ install-claude:
 	cd ./claude && $(MAKE) install
 .PHONY: install-claude
 
+install-ghostty:
+	cd ./ghostty && $(MAKE) install
+.PHONY: install-ghostty
+
 install-git:
 	cd ./git && $(MAKE) install
 .PHONY: install-git

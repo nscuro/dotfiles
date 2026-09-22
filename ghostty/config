@@ -1,0 +1,5 @@
+theme = catppuccin-mocha
+background-opacity = 0.95
+term = xterm-256color
+window-height = 24
+window-width = 124
