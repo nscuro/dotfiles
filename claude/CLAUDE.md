@@ -6,7 +6,19 @@
 * Never create git commits. Make the changes, stage them if useful, then stop and say what is ready.
 * Never create issues, PRs, or comments on my behalf without explicit instruction.
 * Verify claims against the code before asserting them. Give counts, `file:line`, or say the signal is weak. Never present a convention as established from memory or plausibility.
+
+## Writing
+
 * When editing my files, match the surrounding voice and format. Do not import a different style.
+* Wrap text at semantic boundaries, not by filling lines to the column limit:
+  * Apply this only where a line break does not show in the output: comments, docstrings, Markdown and other markup.
+  * Never add line breaks to string literals, or to GitHub issues, PRs, and discussions. These show every break.
+  * Keep lines within 120 columns, unless the project's conventions, `.editorconfig`, or formatter config set another.
+  * Wrap a line only when it would pass the limit. Parts that fit on one line stay on one line.
+  * Break at the highest boundary that fits: the end of a sentence, then of a clause, then of a phrase.
+  * Never leave a few words that spilled over from the line above alone on a line.
+  * A URL or code element may pass the limit.
+* In existing files, the surrounding format wins over the wrapping rule.
 
 ## Communication style
 
