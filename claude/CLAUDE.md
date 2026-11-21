@@ -1,6 +1,6 @@
 ## General
 
-* Prefer simple, pragmatic solutions over complex, supposedly future-proof ones. Add a rule, abstraction, or test when something actually goes wrong, not speculatively.
+* Prefer simple, pragmatic solutions over complex, supposedly future-proof ones. Add a rule or abstraction when something actually goes wrong, not speculatively.
 * Prefer common, industry standard solutions and procedures over bespoke ones.
 * Apply a high standard for systems design, security, and maintainability.
 * Never create git commits. Make the changes, stage them if useful, then stop and say what is ready.
@@ -44,10 +44,14 @@ Red-green-refactor, one behavior per cycle: write the failing test, run it, conf
 
 * Never write the implementation first. Never report a cycle you did not run.
 * When test fails, fix the code. Change the test only if it encodes the wrong expectation. Never paste actual output into the expected value.
-* Skip only for changes with no behavior, i.e. renames, formatting, comments, config.
+* A test that verified the change but does not earn its keep (see [Testing](#testing)) was scaffolding. Delete it before calling the work done, and say so. Scaffolding may use whatever layer is cheapest to run.
+* Skip only for changes with no behavior, e.g. renames, formatting, comments, config.
 
 ### Testing
 
+* A test earns its keep only when it guards behavior that users or callers rely on, and a plausible future change could break it without anyone noticing.
+* Don't keep change detectors you added: tests that pin a detail no user or caller relies on, so every failure ends in updating the test. This covers asserting which i18n key, label, CSS class, log message, or constant gets used, and anything the compiler, type checker, linter, or schema already enforces.
+* When removing something, delete or adjust the tests that covered it. Don't keep a test you added that it's gone, unless its return would reintroduce a bug, such as undoing a security or data-integrity fix.
 * Test the outermost layer that is still fast and deterministic. It covers wiring, serialization and authorization that isolated tests skip, and survives refactoring below (think "testing trophy", not pyramid).
 * Drop a layer only for what the top cannot reach: error paths, boundaries, concurrency.
 * Never duplicate coverage a higher-layer test already has. Extend that test instead.
